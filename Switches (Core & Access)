@@ -1,0 +1,375 @@
+###Configure Ruijie Switches as Coreswitch with Inter-vlan routing, Dynamic Host Configuration Protocol and Virtual Router Redundancy Protocol.###
+
+!@RuijieSw1
+
+hostname Core1
+!
+no cwmp
+!
+service dhcp
+ip dhcp excluded-address 10.10.16.1 10.10.16.50
+!
+ip dhcp pool IT
+ network 10.10.16.0 255.255.255.0
+ dns-server 8.8.8.8
+ default-router 10.10.16.1
+!
+install 0 X86
+!
+sysmac 5001.0009.0001
+!
+webmaster level 0 username admin password 7 1226011f4303
+!
+no service password-encryption
+!
+redundancy
+!
+vpdn limit_rate 15
+!
+enable secret 8 $1c$7eyy23uMQk$`.2j2`:z!8&:26xfnr~:(66#`#|bd(8fvpp6&8v4$
+!
+vlan 10
+ name NTWK-MGMT
+!
+vlan 12
+ name SERVER
+!
+vlan 14
+ name ACCOUNTING
+!
+vlan 16
+ name IT
+!
+vlan 1
+!
+interface GigabitEthernet 0/0
+ switchport mode trunk
+ switchport trunk native vlan 10
+!
+interface GigabitEthernet 0/1
+ switchport mode trunk
+ switchport trunk native vlan 10
+!
+interface GigabitEthernet 0/2
+!
+interface GigabitEthernet 0/3
+!
+interface GigabitEthernet 0/4
+!
+interface GigabitEthernet 0/5
+!
+interface GigabitEthernet 0/6
+ no switchport
+ ip address 10.10.254.2 255.255.255.252
+!
+interface GigabitEthernet 0/7
+!
+interface GigabitEthernet 0/8
+!
+interface GigabitEthernet 0/9
+!
+interface VLAN 10
+ ip address 10.10.10.3 255.255.255.0
+ vrrp 1 ip 10.10.10.1
+ vrrp 1 priority 150
+!
+interface VLAN 12
+ ip address 10.10.12.3 255.255.255.0
+ vrrp 1 ip 10.10.12.1
+ vrrp 1 priority 150
+!
+interface VLAN 14
+ ip address 10.10.14.3 255.255.255.0
+ vrrp 1 ip 10.10.14.1
+ vrrp 1 priority 150
+!
+interface VLAN 16
+ ip address 10.10.16.3 255.255.255.0
+ vrrp 1 ip 10.10.16.1
+ vrrp 1 priority 150
+!
+ip route 0.0.0.0 0.0.0.0 10.10.254.1
+!
+line console 0
+ logging synchronous
+line vty 0 4
+ logging synchronous
+ login
+!
+end
+
+
+!@RuijieSw2
+
+hostname Core2
+!
+no cwmp
+!
+ip dhcp excluded-address 10.10.16.1 10.10.16.50
+!
+ip dhcp pool IT
+ network 10.10.16.0 255.255.255.0
+ dns-server 8.8.8.8
+ default-router 10.10.16.1
+!
+install 0 X86
+!
+sysmac 5001.000a.0001
+!
+webmaster level 0 username admin password 7 1226011f4303
+!
+no service password-encryption
+!
+redundancy
+!
+vpdn limit_rate 15
+!
+enable secret 8 $1c$7eyy23uMQk$`.2j2`:z!8&:26xfnr~:(66#`#|bd(8fvpp6&8v4$
+!
+vlan 10
+ name NTWK-MGMT
+!
+vlan 12
+ name SERVER
+!
+vlan 14
+ name ACCOUNTING
+!
+vlan 16
+ name IT
+!
+vlan 1
+!
+interface GigabitEthernet 0/0
+ switchport mode trunk
+ switchport trunk native vlan 10
+!
+interface GigabitEthernet 0/1
+ switchport mode trunk
+ switchport trunk native vlan 10
+!
+interface GigabitEthernet 0/2
+!
+interface GigabitEthernet 0/3
+!
+interface GigabitEthernet 0/4
+!
+interface GigabitEthernet 0/5
+!
+interface GigabitEthernet 0/6
+ no switchport
+ ip address 10.10.253.2 255.255.255.252
+!
+interface GigabitEthernet 0/7
+!
+interface GigabitEthernet 0/8
+!
+interface GigabitEthernet 0/9
+!
+interface VLAN 10
+ ip address 10.10.10.2 255.255.255.0
+ vrrp 1 ip 10.10.10.1
+!
+interface VLAN 12
+ ip address 10.10.12.2 255.255.255.0
+ vrrp 1 ip 10.10.12.1
+!
+interface VLAN 14
+ ip address 10.10.14.2 255.255.255.0
+ vrrp 1 ip 10.10.14.1
+!
+interface VLAN 16
+ ip address 10.10.16.2 255.255.255.0
+ vrrp 1 ip 10.10.16.1
+!
+ip route 0.0.0.0 0.0.0.0 10.10.253.1
+!
+line console 0
+ logging synchronous
+line vty 0 4
+ logging synchronous
+ login
+!
+end
+
+!@AccessSW
+
+hostname Switch
+!
+!
+vrf definition Mgmt-vrf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+no logging console
+no aaa new-model
+switch 1 provision c9kv-uadp-8p
+!
+!
+!
+!
+!
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+crypto pki trustpoint TP-self-signed-2874884994
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-2874884994
+ revocation-check none
+ rsakeypair TP-self-signed-2874884994
+!
+!
+crypto pki certificate chain SLA-TrustPoint
+ certificate ca 01
+  30820321 30820209 A0030201 02020101 300D0609 2A864886 F70D0101 0B050030
+  32310E30 0C060355 040A1305 43697363 6F312030 1E060355 04031317 43697363
+  6F204C69 63656E73 696E6720 526F6F74 20434130 1E170D31 33303533 30313934
+  3834375A 170D3338 30353330 31393438 34375A30 32310E30 0C060355 040A1305
+  43697363 6F312030 1E060355 04031317 43697363 6F204C69 63656E73 696E6720
+  526F6F74 20434130 82012230 0D06092A 864886F7 0D010101 05000382 010F0030
+  82010A02 82010100 A6BCBD96 131E05F7 145EA72C 2CD686E6 17222EA1 F1EFF64D
+  CBB4C798 212AA147 C655D8D7 9471380D 8711441E 1AAF071A 9CAE6388 8A38E520
+  1C394D78 462EF239 C659F715 B98C0A59 5BBB5CBD 0CFEBEA3 700A8BF7 D8F256EE
+  4AA4E80D DB6FD1C9 60B1FD18 FFC69C96 6FA68957 A2617DE7 104FDC5F EA2956AC
+  7390A3EB 2B5436AD C847A2C5 DAB553EB 69A9A535 58E9F3E3 C0BD23CF 58BD7188
+  68E69491 20F320E7 948E71D7 AE3BCC84 F10684C7 4BC8E00F 539BA42B 42C68BB7
+  C7479096 B4CB2D62 EA2F505D C7B062A4 6811D95B E8250FC4 5D5D5FB8 8F27D191
+  C55F0D76 61F9A4CD 3D992327 A8BB03BD 4E6D7069 7CBADF8B DF5F4368 95135E44
+  DFC7C6CF 04DD7FD1 02030100 01A34230 40300E06 03551D0F 0101FF04 04030201
+  06300F06 03551D13 0101FF04 05300301 01FF301D 0603551D 0E041604 1449DC85
+  4B3D31E5 1B3E6A17 606AF333 3D3B4C73 E8300D06 092A8648 86F70D01 010B0500
+  03820101 00507F24 D3932A66 86025D9F E838AE5C 6D4DF6B0 49631C78 240DA905
+  604EDCDE FF4FED2B 77FC460E CD636FDB DD44681E 3A5673AB 9093D3B1 6C9E3D8B
+  D98987BF E40CBD9E 1AECA0C2 2189BB5C 8FA85686 CD98B646 5575B146 8DFC66A8
+  467A3DF4 4D565700 6ADF0F0D CF835015 3C04FF7C 21E878AC 11BA9CD2 55A9232C
+  7CA7B7E6 C1AF74F6 152E99B7 B1FCF9BB E973DE7F 5BDDEB86 C71E3B49 1765308B
+  5FB0DA06 B92AFE7F 494E8A9E 07B85737 F3A58BE1 1A48A229 C37C1E69 39F08678
+  80DDCD16 D6BACECA EEBC7CF9 8428787B 35202CDC 60E4616A B623CDBD 230E3AFB
+  418616A9 4093E049 4D10AB75 27E86F73 932E35B5 8862FDAE 0275156F 719BB2F0
+  D697DF7F 28
+        quit
+crypto pki certificate chain TP-self-signed-2874884994
+ certificate self-signed 01
+  30820330 30820218 A0030201 02020101 300D0609 2A864886 F70D0101 05050030
+  31312F30 2D060355 04031326 494F532D 53656C66 2D536967 6E65642D 43657274
+  69666963 6174652D 32383734 38383439 3934301E 170D3235 31313134 30343538
+  33345A17 0D333531 31313430 34353833 345A3031 312F302D 06035504 03132649
+  4F532D53 656C662D 5369676E 65642D43 65727469 66696361 74652D32 38373438
+  38343939 34308201 22300D06 092A8648 86F70D01 01010500 0382010F 00308201
+  0A028201 01009F2D 355508B8 F347C1DB A7866981 192DD18C 007323D0 DDFDB7F8
+  8A46CB68 6EE15FBA 42FCB1B0 4939B2D9 9C8B1636 C8A8C089 70CEB911 E6C5C6D6
+  ECD0819E 6BB42972 47ADEC45 44AD312E D3B7087F 46DB4B44 0E1EEDCE 352D3D8A
+  52A9AEC9 9A725DDF 37F4A367 0A2BDADD E3B89617 8186E402 F2DBEC48 589E9C3C
+  72BF0A3C C913241E 5224693C 2B7E4258 A259F419 C8C5020B 3EEA1B4C BBF422BB
+  E631FA4E 0BF557D3 6E388EF0 5168D7F5 0BC9246F 7B0F5D7D C84400AE 2ACF3AF5
+  9C07EB17 9D020668 34AC58AE 49DE6913 8351BED0 FD628639 1728C328 E1BD2028
+  24CD1A6B F1A22C00 21E077AD 3FCBF2DB 7C5C5107 A1DFE8AD B63E4739 6F0C7A2D
+  3DB0C4ED 77970203 010001A3 53305130 0F060355 1D130101 FF040530 030101FF
+  301F0603 551D2304 18301680 145D018C 00B3A106 81A8FCA8 7A9E6B3B 61DF8AC8
+  D1301D06 03551D0E 04160414 5D018C00 B3A10681 A8FCA87A 9E6B3B61 DF8AC8D1
+  300D0609 2A864886 F70D0101 05050003 82010100 59A48D27 8F63E72C 3A01C62A
+  6FFFE4EC 571599E1 992894F4 A09E43CA 1A397C84 3D32268B 3FBDB068 F0B57B3E
+  360D2CDD B7A4B429 AF240CDE 9F468FCE 734BD328 3B9365C0 FD239DCF 4A465CFC
+  678EDE5C 55715236 AEA7CAD6 A0A40D6A D2462EF9 4C8A6197 48685BB8 C003DB04
+  DB96D280 9DAB147A 33F20618 AAD8A594 EDC67420 581C7D2D ED3DE635 8646A3AF
+  E088E1DC B547AD8A 5754DB34 32DC1E36 5FB4C9BD 94F21458 2C45786B 50A812A8
+  79A3A51A 63C6B5FB 9AE3371F 950ECA61 AFB94438 268E1222 23802DA6 D0E5CBF5
+  3466B0B3 B31BEC73 E4BFF091 84342C9A D97E922F 13334DCD AAAFDD36 0EE8D966
+  0ED5E252 7BF573D1 46FBBCE3 71977779 2030D477
+        quit
+!
+memory free low-watermark processor 75927
+!
+diagnostic bootup level minimal
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+!
+!
+enable secret 9 $9$4jMFAAr.FdSiB.$qhcufEhAyZYsjGAHoqbsdPj9minbAibTR1v/Fm8s8kU
+!
+!
+redundancy
+ mode sso
+crypto engine compliance shield disable
+
+!
+policy-map system-cpp-policy
+!
+
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address dhcp
+ negotiation auto
+!
+interface GigabitEthernet1/0/1
+ switchport trunk native vlan 10
+ switchport mode trunk
+!
+interface GigabitEthernet1/0/2
+ switchport trunk native vlan 10
+ switchport mode trunk
+!
+interface GigabitEthernet1/0/3
+ switchport access vlan 16
+ switchport mode access
+!
+interface GigabitEthernet1/0/4
+!
+interface GigabitEthernet1/0/5
+!
+interface GigabitEthernet1/0/6
+!
+interface GigabitEthernet1/0/7
+!
+interface GigabitEthernet1/0/8
+!
+interface Vlan1
+ no ip address
+!
+interface Vlan10
+ ip address 10.10.10.4 255.255.255.0
+!
+ip default-gateway 10.10.10.1
+ip forward-protocol nd
+ip tcp mss 1280
+ip tcp window-size 212000
+ip http server
+ip http authentication local
+ip http secure-server
+ip ssh bulk-mode 131072
+!
+!
+!
+!
+control-plane
+ service-policy input system-cpp-policy
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+ login
+ transport input ssh
+line vty 5 15
+ login
+ transport input ssh
+
+!
+end
